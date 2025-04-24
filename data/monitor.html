@@ -64,6 +64,7 @@
   </style>
 </head>
 <body>
+<h3 id="datetime"></h3>
   <button onclick="toggleDark()">🌓 Toggle Dark</button>
   <button onclick="refreshLabels()">🔄 Refresh</button>
 
@@ -110,6 +111,14 @@
         el.className = state === "1" ? "on" : "off";
       }
     };
+
+	function updateClock() {
+	  const now = new Date();
+	  const formatted = now.toLocaleString();
+	  document.getElementById("datetime").innerText = formatted;
+	}
+	setInterval(updateClock, 1000);
+	updateClock();
   </script>
 </body>
 </html>
