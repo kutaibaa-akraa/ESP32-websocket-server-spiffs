@@ -11,6 +11,7 @@
       padding: 20px;
       background: #f4f4f4;
       text-align: center;
+      transition: background 0.3s, color 0.3s;
     }
 
     .status {
@@ -54,12 +55,18 @@
     }
 
     button {
-      margin-bottom: 20px;
+      margin: 0 10px 20px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <button onclick="toggleDark()">🌓 Toggle Dark</button>
+  <button onclick="refreshLabels()">🔄 Refresh</button>
+
   <h2>ESP32 Output Status</h2>
   <div class="status">
     <div class="card"><div class="label" id="label0">Output 1</div><div id="state0" class="off">OFF</div></div>
@@ -80,8 +87,7 @@
       document.body.classList.add("dark");
     }
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
+    function refreshLabels() {
       fetch("/labels.json")
         .then(res => res.json())
         .then(data => {
@@ -89,6 +95,11 @@
             document.getElementById(`label${i}`).innerText = label;
           });
         });
+    }
+
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+      refreshLabels();
     };
 
     ws.onmessage = (event) => {
