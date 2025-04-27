@@ -94,6 +94,27 @@ void handleRoot() {
   }
 }
 
+void handleStyle() { // --------تحميل ملف الستايل-------
+  File file = SPIFFS.open("/style.css", "r");
+  if (file) {
+    server.streamFile(file, "text/css");
+    file.close();
+  } else {
+    server.send(404, "text/plain", "File not found");
+  }
+}
+
+void handleScript() { // -----------ملف السكريبت--------
+  File file = SPIFFS.open("/script.js", "r");
+  if (file) {
+    server.streamFile(file, "application/javascript");
+    file.close();
+  } else {
+    server.send(404, "text/plain", "File not found");
+  }
+}
+
+
 void handleSaveSettings() {
   if (server.hasArg("ssid") && server.hasArg("pass") && server.hasArg("ip")) {
     strncpy(ssid, server.arg("ssid").c_str(), sizeof(ssid));
@@ -255,15 +276,16 @@ void setup() {
   }
 
   setupOutputs();
-
   server.on("/", handleRoot);
+  server.on("/style.css", handleStyle);
+  server.on("/script.js", handleScript);
   server.on("/save", HTTP_POST, handleSaveSettings);
   server.on("/labels.json", handleLabelsJson);
   server.on("/api/output", handleApiOutput);
   server.on("/api/status", handleApiStatus);
   server.on("/reset", handleReset); // <-- نقطة إعادة الضبط
-  server.begin();
 
+  server.begin();
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
 }
