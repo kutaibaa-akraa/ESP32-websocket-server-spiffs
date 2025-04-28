@@ -244,6 +244,56 @@ void handleReset() {
   ESP.restart();
 }
 
+void handleBackup() { //------- تنزيل نسخة احتياط من الاإعدادات --------
+  String json = "{";
+  json += "\"ssid\":\"" + String(ssid) + "\",";
+  json += "\"password\":\"" + String(password) + "\",";
+  json += "\"static_ip\":\"" + String(static_ip) + "\",";
+  json += "\"outputs\":[";
+  for (int i = 0; i < 4; i++) {
+    json += "{";
+    json += "\"name\":\"" + String(outputNames[i]) + "\",";
+    json += "\"state\":\"" + String(outputStates[i] ? "on" : "off") + "\"";
+    json += "}";
+    if (i < 3) json += ",";
+  }
+  json += "]}";
+
+  server.sendHeader("Content-Type", "application/json");
+  server.sendHeader("Content-Disposition", "attachment; filename=settings.json");
+  server.send(200, "application/json", json);
+}
+
+void handleRestore() {  // ------- استعادة نسخة مخزنة في ملف من الإعدادات ------------
+  if (server.hasArg("plain")) {
+    String body = server.arg("plain");
+    DynamicJsonDocument doc(1024);
+    DeserializationError error = deserializeJson(doc, body);
+    if (error) {
+      server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+      return;
+    }
+
+    strlcpy(ssid, doc["ssid"] | "ESP32_Default", sizeof(ssid));
+    strlcpy(password, doc["password"] | "12345678", sizeof(password));
+    strlcpy(static_ip, doc["static_ip"] | "192.168.1.200", sizeof(static_ip));
+
+    for (int i = 0; i < 4; i++) {
+      if (doc["outputs"][i]["name"])
+        strlcpy(outputNames[i], doc["outputs"][i]["name"], sizeof(outputNames[i]));
+      outputStates[i] = (String(doc["outputs"][i]["state"]) == "on") ? true : false;
+    }
+
+    saveNetworkSettings();
+    server.send(200, "application/json", "{\"status\":\"Restored. Rebooting...\"}");
+    delay(1000);
+    ESP.restart();
+  } else {
+    server.send(400, "application/json", "{\"error\":\"No Data\"}");
+  }
+}
+
+
 void setup() {
   Serial.begin(115200);
   loadNetworkSettings();
@@ -285,6 +335,8 @@ void setup() {
   server.on("/api/output", handleApiOutput);
   server.on("/api/status", handleApiStatus);
   server.on("/reset", handleReset); // <-- نقطة إعادة الضبط
+  server.on("/backup", handleBackup);
+  server.on("/restore", HTTP_POST, handleRestore);
 
   server.begin();
   webSocket.begin();

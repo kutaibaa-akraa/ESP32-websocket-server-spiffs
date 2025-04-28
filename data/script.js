@@ -98,3 +98,33 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+function downloadBackup() {
+  window.open("/backup", "_blank");
+}
+
+function uploadBackup() {
+  const fileInput = document.getElementById('uploadFile');
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const content = event.target.result;
+    fetch('/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: content
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert("تم استعادة الإعدادات، يتم إعادة التشغيل الآن!");
+      setTimeout(() => location.reload(), 5000);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("فشل رفع النسخة الاحتياطية");
+    });
+  };
+  reader.readAsText(file);
+}

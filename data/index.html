@@ -57,6 +57,11 @@
 <button type="button" onclick="factoryReset()" style="background:#d9534f; color:white; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">
   🧨 Reset to Factory
 </button>
+<hr>
+<button type="button" onclick="downloadBackup()" style="background:#0275d8; color:white; padding:10px 16px; border:none; border-radius:6px; margin-top:10px;">📥 Download Backup</button>
+<br><br>
+<input type="file" id="uploadFile" accept="application/json" onchange="uploadBackup()" style="margin-top:10px;">
+
   </form>
 
 </body>
