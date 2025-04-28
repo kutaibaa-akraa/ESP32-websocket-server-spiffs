@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f4f4;
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 180px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    .label {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .on {
+      color: green;
+      font-weight: bold;
+    }
+
+    .off {
+      color: red;
+      font-weight: bold;
+    }
+
+    .dark {
+      background-color: #121212;
+      color: #f4f4f4;
+    }
+
+    .dark .card {
+      background: #1e1e1e;
+      color: #f4f4f4;
+    }
+
+    button {
+      margin: 0 10px 20px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<h3 id="datetime"></h3>
+  <button onclick="toggleDark()">🌓 Toggle Dark</button>
+  <button onclick="refreshLabels()">🔄 Refresh</button>
+
+  <h2>ESP32 Output Status</h2>
+  <div class="status">
+    <div class="card"><div class="label" id="label0">Output 1</div><div id="state0" class="off">OFF</div></div>
+    <div class="card"><div class="label" id="label1">Output 2</div><div id="state1" class="off">OFF</div></div>
+    <div class="card"><div class="label" id="label2">Output 3</div><div id="state2" class="off">OFF</div></div>
+    <div class="card"><div class="label" id="label3">Output 4</div><div id="state3" class="off">OFF</div></div>
+  </div>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.hostname}:81`);
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("darkMode", document.body.classList.contains("dark") ? "1" : "0");
+    }
+
+    if (localStorage.getItem("darkMode") === "1") {
+      document.body.classList.add("dark");
+    }
+
+    function refreshLabels() {
+      fetch("/labels.json")
+        .then(res => res.json())
+        .then(data => {
+          data.labels.forEach((label, i) => {
+            document.getElementById(`label${i}`).innerText = label;
+          });
+        });
+    }
+
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+      refreshLabels();
+    };
+
+    ws.onmessage = (event) => {
+      const [index, state] = event.data.split(":");
+      const el = document.getElementById(`state${index}`);
+      if (el) {
+        el.innerText = state === "1" ? "ON" : "OFF";
+        el.className = state === "1" ? "on" : "off";
+      }
+    };
+
+	function updateClock() {
+	  const now = new Date();
+	  const formatted = now.toLocaleString();
+	  document.getElementById("datetime").innerText = formatted;
+	}
+	setInterval(updateClock, 1000);
+	updateClock();
+  </script>
+</body>
+</html>

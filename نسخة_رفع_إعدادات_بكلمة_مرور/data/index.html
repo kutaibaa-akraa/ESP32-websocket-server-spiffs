@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css" type="text/css" />
+  <script src="script.js" type="text/javascript" ></script>
+
+ </head>
+<body>
+  <button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
+  <button id="settingsToggle" onclick="toggleSettings()">⚙️ Show/Hide Settings</button>
+
+  <h2>ESP32 Output Control</h2>
+
+  <div style="text-align:center; margin-bottom: 20px;">
+    <button class="btn on" onclick="toggleAll('on')">🔛 Turn All ON</button>
+    <button class="btn off" onclick="toggleAll('off')">🔘 Turn All OFF</button>
+  </div>
+
+  <div class="controls">
+    <div class="card">
+      <h3 id="label0">Output 1</h3>
+      <button class="btn off" onclick="handleButton(0)" id="btn0">Toggle</button><br>
+      <input class="timer-input" type="number" id="timer0" placeholder="sec">
+    </div>
+    <div class="card">
+      <h3 id="label1">Output 2</h3>
+      <button class="btn off" onclick="handleButton(1)" id="btn1">Toggle</button><br>
+      <input class="timer-input" type="number" id="timer1" placeholder="sec">
+    </div>
+    <div class="card">
+      <h3 id="label2">Output 3</h3>
+      <button class="btn off" onclick="handleButton(2)" id="btn2">Toggle</button><br>
+      <input class="timer-input" type="number" id="timer2" placeholder="sec">
+    </div>
+    <div class="card">
+      <h3 id="label3">Output 4</h3>
+      <button class="btn off" onclick="handleButton(3)" id="btn3">Toggle</button><br>
+      <input class="timer-input" type="number" id="timer3" placeholder="sec">
+    </div>
+  </div>
+
+  <form method="POST" action="/save" id="settingsForm">
+    <h3>WiFi & Output Settings</h3>
+    SSID: <input type="text" name="ssid"><br>
+    Password: <input type="text" name="pass"><br>
+    Static IP: <input type="text" name="ip"><br>
+    <hr>
+    Output 1 Name: <input type="text" name="name0"><br>
+    Output 2 Name: <input type="text" name="name1"><br>
+    Output 3 Name: <input type="text" name="name2"><br>
+    Output 4 Name: <input type="text" name="name3"><br>
+    <br><input type="submit" value="Save & Restart">
+	<hr>
+<button type="button" onclick="factoryReset()" style="background:#d9534f; color:white; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">
+  🧨 Reset to Factory
+</button>
+<hr>
+<button type="button" onclick="downloadBackup()" style="background:#0275d8; color:white; padding:10px 16px; border:none; border-radius:6px; margin-top:10px;">📥 Download Backup</button>
+<br><br>
+<input type="file" id="uploadFile" accept="application/json" onchange="uploadBackup()" style="margin-top:10px;">
+
+  </form>
+
+</body>
+</html>
