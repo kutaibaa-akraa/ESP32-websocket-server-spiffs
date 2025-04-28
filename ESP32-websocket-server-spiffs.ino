@@ -35,8 +35,8 @@
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
 
-#define NAME_LENGTH 32
-#define EEPROM_SIZE (84 + (4 * NAME_LENGTH))
+#define NAME_LENGTH 32  // <-- أو أي حجم تريده مثل 64
+#define EEPROM_SIZE (84 + (4 * NAME_LENGTH))   // ديناميكي مع طول الاسم
 
 char ssid[32] = "your-ssid";        // اسم الشبكة المحلية
 char password[32] = "your-password"; // كلمة الدخول للشبكة المحلية
