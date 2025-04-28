@@ -104,13 +104,6 @@ function downloadBackup() {
 }
 
 function uploadBackup() {
-  const password = prompt("🔒 أدخل كلمة المرور لاستعادة النسخة:");
-  if (password !== "1234") {  // <-- يمكنك تغيير كلمة السر هنا
-    alert("❌ كلمة المرور غير صحيحة. تم إلغاء العملية.");
-    document.getElementById('uploadFile').value = ""; // مسح اختيار الملف
-    return;
-  }
-
   const fileInput = document.getElementById('uploadFile');
   const file = fileInput.files[0];
   if (!file) return;
@@ -118,21 +111,42 @@ function uploadBackup() {
   const reader = new FileReader();
   reader.onload = function(event) {
     const content = event.target.result;
-    fetch('/restore', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: content
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert("✅ تم استعادة الإعدادات بنجاح، يتم إعادة التشغيل الآن!");
-      setTimeout(() => location.reload(), 5000);
-    })
-    .catch(err => {
-      console.error(err);
+    
+    if (!confirm("⚡ هل تريد بالتأكيد استعادة النسخة الاحتياطية؟ قد يتم إعادة تشغيل الجهاز!")) {
+      document.getElementById('uploadFile').value = ""; // إلغاء اختيار الملف
+      return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/restore", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        const percent = (e.loaded / e.total) * 100;
+        document.getElementById('progressContainer').style.display = "block";
+        document.getElementById('uploadProgress').value = percent;
+      }
+    };
+
+    xhr.onload = function() {
+      document.getElementById('progressContainer').style.display = "none";
+      if (xhr.status == 200) {
+        alert("✅ تم استعادة الإعدادات بنجاح، يتم إعادة التشغيل الآن!");
+        setTimeout(() => location.reload(), 5000);
+      } else {
+        alert("❌ حدث خطأ أثناء استعادة النسخة!");
+      }
+    };
+
+    xhr.onerror = function() {
+      document.getElementById('progressContainer').style.display = "none";
       alert("❌ فشل رفع النسخة الاحتياطية");
-    });
+    };
+
+    xhr.send(content);
   };
   reader.readAsText(file);
 }
+
 
