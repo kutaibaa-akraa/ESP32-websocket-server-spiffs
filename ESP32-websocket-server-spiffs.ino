@@ -34,6 +34,7 @@
 // مكتبة رفع الملفات -SPIFFS.h- قديمة و تعمل على اردوينو 1.8.19
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
+#include <ArduinoJson.h>
 
 #define NAME_LENGTH 32  // <-- أو أي حجم تريده مثل 64
 #define EEPROM_SIZE (84 + (4 * NAME_LENGTH))   // ديناميكي مع طول الاسم
