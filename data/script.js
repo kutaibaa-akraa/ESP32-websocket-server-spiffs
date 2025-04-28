@@ -104,6 +104,13 @@ function downloadBackup() {
 }
 
 function uploadBackup() {
+  const password = prompt("🔒 أدخل كلمة المرور لاستعادة النسخة:");
+  if (password !== "1234") {  // <-- يمكنك تغيير كلمة السر هنا
+    alert("❌ كلمة المرور غير صحيحة. تم إلغاء العملية.");
+    document.getElementById('uploadFile').value = ""; // مسح اختيار الملف
+    return;
+  }
+
   const fileInput = document.getElementById('uploadFile');
   const file = fileInput.files[0];
   if (!file) return;
@@ -118,13 +125,14 @@ function uploadBackup() {
     })
     .then(res => res.json())
     .then(data => {
-      alert("تم استعادة الإعدادات، يتم إعادة التشغيل الآن!");
+      alert("✅ تم استعادة الإعدادات بنجاح، يتم إعادة التشغيل الآن!");
       setTimeout(() => location.reload(), 5000);
     })
     .catch(err => {
       console.error(err);
-      alert("فشل رفع النسخة الاحتياطية");
+      alert("❌ فشل رفع النسخة الاحتياطية");
     });
   };
   reader.readAsText(file);
 }
+
