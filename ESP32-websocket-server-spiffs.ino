@@ -35,13 +35,14 @@
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
 
-#define EEPROM_SIZE 148
+#define NAME_LENGTH 32
+#define EEPROM_SIZE (84 + (4 * NAME_LENGTH))
 
 char ssid[32] = "your-ssid";        // اسم الشبكة المحلية
 char password[32] = "your-password"; // كلمة الدخول للشبكة المحلية
 char static_ip[16] = "192.168.1.15";
 
-char outputNames[4][16] = {"Output 1", "Output 2", "Output 3", "Output 4"};
+char outputNames[4][NAME_LENGTH] = {"Output 1", "Output 2", "Output 3", "Output 4"};
 bool outputStates[4] = {false, false, false, false};
 unsigned long offTimers[4] = {0, 0, 0, 0};
 
@@ -57,8 +58,8 @@ void loadNetworkSettings() {
   EEPROM.get(64, static_ip);
   for (int i = 0; i < 4; i++) {
     outputStates[i] = EEPROM.read(80 + i);
-    EEPROM.get(84 + (i * 16), outputNames[i]);
-    outputNames[i][15] = '\0'; // تأكيد نهاية السلسلة
+    EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
+    outputNames[i][NAME_LENGTH - 1] = '\0';
   }
   EEPROM.end();
 }
@@ -69,9 +70,9 @@ void saveNetworkSettings() {
   EEPROM.put(32, password);
   EEPROM.put(64, static_ip);
   for (int i = 0; i < 4; i++) {
-    outputNames[i][15] = '\0'; // تأكيد نهاية السلسلة
+    outputNames[i][NAME_LENGTH - 1] = '\0'; // تأكيد نهاية السلسلة
     EEPROM.write(80 + i, outputStates[i]);
-    EEPROM.put(84 + (i * 16), outputNames[i]);
+    EEPROM.put(84 + (i * NAME_LENGTH), outputNames[i]);
   }
   EEPROM.commit();
   EEPROM.end();
