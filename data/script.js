@@ -162,5 +162,21 @@ function confirmRestore(confirmed) {
   xhr.send(uploadedContent);
 }
 
+let isProcessing = false; // متغير لمنع الطلبات المتداخلة
 
+function handleButton(index) {
+  if (isProcessing) return;
+  isProcessing = true;
+  
+  const timerVal = document.getElementById(`timer${index}`).value;
+  if (ws.readyState === WebSocket.OPEN) {
+    if (timerVal && Number(timerVal) > 0) {
+      ws.send(`${index}:${timerVal}`);
+    } else {
+      ws.send(index.toString());
+    }
+  }
+  
+  setTimeout(() => { isProcessing = false; }, 500); // تأخير 500 مللي ثانية
+}
 
