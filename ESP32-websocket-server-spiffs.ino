@@ -211,9 +211,11 @@ void handleApiStatus() {
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   if (type == WStype_TEXT) {
-    Serial.printf("WebSocket received: %s\n", payload);
     String data = String((char*)payload);
-
+    Serial.println("Received: " + data);
+    
+    if (data.length() == 0) return; // تجاهل الرسائل الفارغة
+    
     if (data.startsWith("all:")) {
       String command = data.substring(4);
       bool state = command == "on";
