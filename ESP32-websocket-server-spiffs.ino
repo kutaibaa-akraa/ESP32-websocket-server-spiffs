@@ -307,10 +307,10 @@ void handleRestore() {
       return;
     }
 
-    // تحميل إعدادات الشبكة
-    strlcpy(ssid, doc["ssid"].as<const char*>() ?: "D-uni", sizeof(ssid));
-    strlcpy(password, doc["password"].as<const char*>() ?: "syfert122333444455555", sizeof(password));
-    strlcpy(static_ip, doc["static_ip"].as<const char*>() ?: "192.168.1.15", sizeof(static_ip));
+   // تحميل إعدادات الشبكة (بدون قيم افتراضية)
+strlcpy(ssid, doc["ssid"].as<const char*>() ?: "", sizeof(ssid));
+strlcpy(password, doc["password"].as<const char*>() ?: "", sizeof(password));
+strlcpy(static_ip, doc["static_ip"].as<const char*>() ?: "", sizeof(static_ip));
 
     // تحميل أسماء المخارج وحالاتها
     for (int i = 0; i < 4; i++) {
