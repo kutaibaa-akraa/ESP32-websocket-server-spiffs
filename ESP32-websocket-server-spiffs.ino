@@ -378,6 +378,12 @@ void setup() {
     return;
   }
 
+  // التحقق من وجود الملفات الأساسية
+  if (!SPIFFS.exists("/index.html") || !SPIFFS.exists("/monitor.html")) {
+    Serial.println("Missing HTML files in SPIFFS!");
+    ESP.restart();
+  }
+
   setupOutputs();
   server.on("/", handleRoot);
   server.on("/monitor.html",handleMonitor);
