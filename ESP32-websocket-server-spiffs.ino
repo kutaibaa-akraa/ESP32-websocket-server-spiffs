@@ -215,7 +215,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     Serial.println("Received: " + data);
     
     if (data.length() == 0) return; // تجاهل الرسائل الفارغة
-    
+
     if (data.startsWith("all:")) {
       String command = data.substring(4);
       bool state = command == "on";
@@ -300,10 +300,9 @@ void handleBackup() { //------- تنزيل نسخة احتياط من الاإع
 void handleRestore() {
   if (server.hasArg("plain")) {
     String body = server.arg("plain");
-
-    DynamicJsonDocument doc(2048);  // حجم مناسب للبيانات
+    DynamicJsonDocument doc(3072); // زيادة حجم المستند إلى 3KB
     DeserializationError error = deserializeJson(doc, body);
-
+    
     if (error) {
       server.send(400, "application/json", "{\"error\":\"Invalid JSON format\"}");
       return;
