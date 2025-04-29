@@ -52,25 +52,26 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 const int outputs[] = {25, 26, 27, 14};
 
-void loadNetworkSettings() {
+void loadNetworkSettings() {  // للتأكد من تحميل أسماء المخارج و إعدادات الشبكة
   EEPROM.begin(EEPROM_SIZE);
   EEPROM.get(0, ssid);
   EEPROM.get(32, password);
   EEPROM.get(64, static_ip);
 
-  // إذا كان SSID فارغًا، نعتبر الإعدادات غير موجودة
-  if (strlen(ssid) == 0) { 
-    Serial.println("No saved network settings.");
-    memset(ssid, 0, sizeof(ssid)); // تأكيد إفراغ البيانات
+  // إذا كان SSID فارغًا، تجاهل تحميل الأسماء (استخدم القيم الافتراضية)
+  if (strlen(ssid) == 0) {
+    memset(ssid, 0, sizeof(ssid));
     memset(password, 0, sizeof(password));
     memset(static_ip, 0, sizeof(static_ip));
+  } else {
+    // تحميل أسماء المخارج إذا وجدت إعدادات شبكة
+    for (int i = 0; i < 4; i++) {
+      outputStates[i] = EEPROM.read(80 + i);
+      EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
+      outputNames[i][NAME_LENGTH - 1] = '\0'; // تأمين نهاية السلسلة
+    }
   }
-
-  for (int i = 0; i < 4; i++) {
-    outputStates[i] = EEPROM.read(80 + i);
-    EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
-    outputNames[i][NAME_LENGTH - 1] = '\0';
-  }
+  
   EEPROM.end();
 }
 
@@ -79,11 +80,13 @@ void saveNetworkSettings() {
   EEPROM.put(0, ssid);
   EEPROM.put(32, password);
   EEPROM.put(64, static_ip);
+  
   for (int i = 0; i < 4; i++) {
     outputNames[i][NAME_LENGTH - 1] = '\0'; // تأكيد نهاية السلسلة
-    EEPROM.write(80 + i, outputStates[i]);
-    EEPROM.put(84 + (i * NAME_LENGTH), outputNames[i]);
+    EEPROM.write(80 + i, outputStates[i]); // حفظ حالة المخرج
+    EEPROM.put(84 + (i * NAME_LENGTH), outputNames[i]); // حفظ الاسم
   }
+  
   EEPROM.commit();
   EEPROM.end();
 }
@@ -135,24 +138,31 @@ void handleScript() { // -----------ملف السكريبت--------
   }
 }
 
-
 void handleSaveSettings() {
-  if (server.hasArg("ssid") && server.hasArg("pass") && server.hasArg("ip")) {
+  if (server.hasArg("ssid") && server.hasArg("pass")) { 
+    // نسخ إعدادات الشبكة
     strncpy(ssid, server.arg("ssid").c_str(), sizeof(ssid));
     strncpy(password, server.arg("pass").c_str(), sizeof(password));
-    strncpy(static_ip, server.arg("ip").c_str(), sizeof(static_ip));
+    
+    if (server.hasArg("ip")) {
+      strncpy(static_ip, server.arg("ip").c_str(), sizeof(static_ip));
+    }
+
+    // ------ حفظ أسماء المخارج ------ 
     for (int i = 0; i < 4; i++) {
       String argName = "name" + String(i);
       if (server.hasArg(argName)) {
         strncpy(outputNames[i], server.arg(argName).c_str(), sizeof(outputNames[i]));
+        outputNames[i][NAME_LENGTH - 1] = '\0'; // تأمين نهاية السلسلة
       }
     }
-    saveNetworkSettings();
+
+    saveNetworkSettings(); // حفظ الكل في EEPROM
     server.send(200, "text/plain", "Saved. Rebooting...");
     delay(1000);
     ESP.restart();
   } else {
-    server.send(400, "text/plain", "Missing parameters");
+    server.send(400, "text/plain", "SSID and Password are required!");
   }
 }
 
