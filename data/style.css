@@ -118,3 +118,35 @@
       border: none;
       cursor: pointer;
     }
+	
+	/* إضافة تنسيق زر المراقبة */
+.btn-monitor {
+  background-color: #007bff; /* لون أزرق */
+  color: white;
+  padding: 10px 16px;
+  margin: 0 10px 20px;
+  border-radius: 6px;
+  text-decoration: none; /* إزالة التسطير من الرابط */
+  display: inline-block; /* لتجنب مشاكل الهوامش */
+}
+
+/* التأكد من تناسق الألوان في الوضع الليلي */
+.dark-mode .btn-monitor {
+  background-color: #0056b3; /* لون أزرق داكن */
+}
+
+/* إضافة تنسيق زر العودة */
+.btn-home {
+  background-color: #28a745; /* لون أخضر */
+  color: white;
+  padding: 10px 16px;
+  margin: 0 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* التأكد من تناسق الألوان في الوضع الليلي */
+.dark-mode .btn-home {
+  background-color: #218838; /* أخضر داكن */
+}

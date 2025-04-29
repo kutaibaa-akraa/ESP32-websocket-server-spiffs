@@ -28,7 +28,25 @@ ws.onerror = (e) => console.error('❌ WebSocket error', e);
 ws.onclose = () => console.warn('⚠️ WebSocket disconnected');
 
 // دالة إرسال أمر تشغيل/إيقاف لمخرج محدد
+// function handleButton(index) {
+//  const timerVal = document.getElementById(`timer${index}`).value;
+ // if (ws.readyState === WebSocket.OPEN) {
+  //  if (timerVal && Number(timerVal) > 0) {
+   //   ws.send(`${index}:${timerVal}`);
+    //} else {
+     // ws.send(index.toString());
+  //  }
+ // } else {
+   // console.warn('WebSocket not connected');
+ // }
+// }
+
+let isProcessing = false; // متغير لمنع الطلبات المتداخلة
+
 function handleButton(index) {
+  if (isProcessing) return;
+  isProcessing = true;
+  
   const timerVal = document.getElementById(`timer${index}`).value;
   if (ws.readyState === WebSocket.OPEN) {
     if (timerVal && Number(timerVal) > 0) {
@@ -36,10 +54,11 @@ function handleButton(index) {
     } else {
       ws.send(index.toString());
     }
-  } else {
-    console.warn('WebSocket not connected');
   }
+  
+  setTimeout(() => { isProcessing = false; }, 200); // تأخير 200 مللي ثانية
 }
+
 
 // دالة تشغيل/إيقاف الكل
 function toggleAll(state) {
@@ -162,21 +181,7 @@ function confirmRestore(confirmed) {
   xhr.send(uploadedContent);
 }
 
-let isProcessing = false; // متغير لمنع الطلبات المتداخلة
 
-function handleButton(index) {
-  if (isProcessing) return;
-  isProcessing = true;
-  
-  const timerVal = document.getElementById(`timer${index}`).value;
-  if (ws.readyState === WebSocket.OPEN) {
-    if (timerVal && Number(timerVal) > 0) {
-      ws.send(`${index}:${timerVal}`);
-    } else {
-      ws.send(index.toString());
-    }
-  }
-  
-  setTimeout(() => { isProcessing = false; }, 500); // تأخير 500 مللي ثانية
+function resetAP() {  // إعادة الضبط إلى وضع AP
+  fetch("/resetAP").then(() => location.reload());
 }
-

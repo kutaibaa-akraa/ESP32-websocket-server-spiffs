@@ -211,9 +211,8 @@ void handleApiStatus() {
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   if (type == WStype_TEXT) {
+        Serial.printf("WebSocket received: %s\n", payload);
     String data = String((char*)payload);
-    Serial.println("Received: " + data);
-    
     if (data.length() == 0) return; // تجاهل الرسائل الفارغة
 
     if (data.startsWith("all:")) {
@@ -359,7 +358,7 @@ void setup() {
     Serial.print("Connecting to WiFi...");
 
   unsigned long startAttemptTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 15000) {
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 8000) {
     delay(500);
     Serial.print(".");
   }
@@ -397,6 +396,17 @@ void setup() {
   server.on("/reset", handleReset); // <-- نقطة إعادة الضبط
   server.on("/backup", handleBackup);
   server.on("/restore", HTTP_POST, handleRestore);
+
+//----- إضافة نقطة نهاية (/resetAP) لإعادة الضبط-------------
+  server.on("/resetAP", []() {
+  memset(ssid, 0, sizeof(ssid));
+  memset(password, 0, sizeof(password));
+  memset(static_ip, 0, sizeof(static_ip));
+  saveNetworkSettings();
+  server.send(200, "text/plain", "Reset done. Rebooting...");
+  delay(1000);
+  ESP.restart();
+});
 
   server.begin();
   webSocket.begin();
