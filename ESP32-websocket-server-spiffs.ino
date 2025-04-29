@@ -34,14 +34,14 @@
 // مكتبة رفع الملفات -SPIFFS.h- قديمة و تعمل على اردوينو 1.8.19
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
-#include <ArduinoJson.h>
+#include <ArduinoJson.h> // الإصدار السابع ----- 7.4.1 ----------
 
 #define NAME_LENGTH 32  // <-- أو أي حجم تريده مثل 64
 #define EEPROM_SIZE (84 + (4 * NAME_LENGTH))   // ديناميكي مع طول الاسم
 
-char ssid[32] = "your-ssid";        // اسم الشبكة المحلية
-char password[32] = "your-password"; // كلمة الدخول للشبكة المحلية
-char static_ip[16] = "192.168.1.15";
+char ssid[32] = "";        // اسم الشبكة المحلية  ----  اسم الشبكة (فارغ)
+char password[32] = ""; // كلمة الدخول للشبكة المحلية ----- كلمة المرور (فارغ)
+char static_ip[16] = ""; // IP ثابت (اختياري)
 
 char outputNames[4][NAME_LENGTH] = {"Output 1", "Output 2", "Output 3", "Output 4"};
 bool outputStates[4] = {false, false, false, false};
@@ -88,6 +88,16 @@ void setupOutputs() {
 
 void handleRoot() {
   File file = SPIFFS.open("/index.html", "r");
+  if (file) {
+    server.streamFile(file, "text/html");
+    file.close();
+  } else {
+    server.send(404, "text/plain", "File not found");
+  }
+}
+
+void handleMonitor() {
+  File file = SPIFFS.open("/monitor.html", "r");
   if (file) {
     server.streamFile(file, "text/html");
     file.close();
@@ -265,35 +275,42 @@ void handleBackup() { //------- تنزيل نسخة احتياط من الاإع
   server.send(200, "application/json", json);
 }
 
-void handleRestore() {  // ------- استعادة نسخة مخزنة في ملف من الإعدادات ------------
+ // ------- استعادة نسخة مخزنة في ملف من الإعدادات ------------
+void handleRestore() {
   if (server.hasArg("plain")) {
     String body = server.arg("plain");
-    DynamicJsonDocument doc(1024);
+
+    DynamicJsonDocument doc(2048);  // حجم مناسب للبيانات
     DeserializationError error = deserializeJson(doc, body);
+
     if (error) {
-      server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+      server.send(400, "application/json", "{\"error\":\"Invalid JSON format\"}");
       return;
     }
 
-    strlcpy(ssid, doc["ssid"] | "ESP32_Default", sizeof(ssid));
-    strlcpy(password, doc["password"] | "12345678", sizeof(password));
-    strlcpy(static_ip, doc["static_ip"] | "192.168.1.200", sizeof(static_ip));
+    // تحميل إعدادات الشبكة
+    strlcpy(ssid, doc["ssid"].as<const char*>() ?: "D-uni", sizeof(ssid));
+    strlcpy(password, doc["password"].as<const char*>() ?: "syfert122333444455555", sizeof(password));
+    strlcpy(static_ip, doc["static_ip"].as<const char*>() ?: "192.168.1.15", sizeof(static_ip));
 
+    // تحميل أسماء المخارج وحالاتها
     for (int i = 0; i < 4; i++) {
       if (doc["outputs"][i]["name"])
-        strlcpy(outputNames[i], doc["outputs"][i]["name"], sizeof(outputNames[i]));
-      outputStates[i] = (String(doc["outputs"][i]["state"]) == "on") ? true : false;
+        strlcpy(outputNames[i], doc["outputs"][i]["name"].as<const char*>(), sizeof(outputNames[i]));
+
+      String stateStr = doc["outputs"][i]["state"].as<String>();
+      outputStates[i] = (stateStr == "on") ? true : false;
     }
 
-    saveNetworkSettings();
-    server.send(200, "application/json", "{\"status\":\"Restored. Rebooting...\"}");
+    saveNetworkSettings();  // حفظ التعديلات في EEPROM
+
+    server.send(200, "application/json", "{\"status\":\"Restored successfully. Rebooting...\"}");
     delay(1000);
     ESP.restart();
   } else {
-    server.send(400, "application/json", "{\"error\":\"No Data\"}");
+    server.send(400, "application/json", "{\"error\":\"No data received\"}");
   }
 }
-
 
 void setup() {
   Serial.begin(115200);
@@ -329,6 +346,7 @@ void setup() {
 
   setupOutputs();
   server.on("/", handleRoot);
+  server.on("/monitor.html",handleMonitor);
   server.on("/style.css", handleStyle);
   server.on("/script.js", handleScript);
   server.on("/save", HTTP_POST, handleSaveSettings);

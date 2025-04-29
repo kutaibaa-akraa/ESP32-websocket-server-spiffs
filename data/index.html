@@ -9,9 +9,8 @@
 
  </head>
 <body>
-  <button onclick="toggleDarkMode()">🌓 Toggle Dark Mode</button>
-  <button id="settingsToggle" onclick="toggleSettings()">⚙️ Show/Hide Settings</button>
-
+  <button onclick="toggleDark()">🌓 Toggle Dark Mode</button>
+  <button onclick="refreshLabels()">🔄 Refresh</button>
   <h2>ESP32 Output Control</h2>
 
   <div style="text-align:center; margin-bottom: 20px;">
@@ -41,7 +40,7 @@
       <input class="timer-input" type="number" id="timer3" placeholder="sec">
     </div>
   </div>
-
+     <button id="settingsToggle" onclick="toggleSettings()">⚙️ Show/Hide Settings</button>
   <form method="POST" action="/save" id="settingsForm">
     <h3>WiFi & Output Settings</h3>
     SSID: <input type="text" name="ssid"><br>

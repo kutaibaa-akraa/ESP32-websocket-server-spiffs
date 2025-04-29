@@ -14,6 +14,11 @@ ws.onmessage = (event) => {
   if (button) {
     button.className = "btn " + (state === "1" ? "on" : "off");
   }
+   const el = document.getElementById(`state${index}`);
+      if (el) {
+        el.innerText = state === "1" ? "ON" : "OFF";
+        el.className = state === "1" ? "mon" : "moff";
+      }
 };
 
 // التعامل مع أخطاء الاتصال
@@ -58,15 +63,16 @@ function refreshLabels() {
     .catch(() => console.warn('Could not fetch labels.'));
 }
 
-// الوضع الليلي
-function toggleDarkMode() {
-  document.body.classList.toggle('dark-mode');
-  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? '1' : '0');
-}
 
-if (localStorage.getItem('darkMode') === '1') {
-  document.body.classList.add('dark-mode');
-}
+// الوضع الليلي صفحة المونيتور
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("darkMode", document.body.classList.contains("dark") ? "1" : "0");
+    }
+
+    if (localStorage.getItem("darkMode") === "1") {
+      document.body.classList.add("dark");
+    }
 
 // إظهار/إخفاء الإعدادات
 function toggleSettings() {
@@ -103,6 +109,8 @@ function downloadBackup() {
   window.open("/backup", "_blank");
 }
 
+let uploadedContent = "";
+
 function uploadBackup() {
   const fileInput = document.getElementById('uploadFile');
   const file = fileInput.files[0];
@@ -110,43 +118,49 @@ function uploadBackup() {
 
   const reader = new FileReader();
   reader.onload = function(event) {
-    const content = event.target.result;
-    
-    if (!confirm("⚡ هل تريد بالتأكيد استعادة النسخة الاحتياطية؟ قد يتم إعادة تشغيل الجهاز!")) {
-      document.getElementById('uploadFile').value = ""; // إلغاء اختيار الملف
-      return;
-    }
-
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/restore", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    xhr.upload.onprogress = function(e) {
-      if (e.lengthComputable) {
-        const percent = (e.loaded / e.total) * 100;
-        document.getElementById('progressContainer').style.display = "block";
-        document.getElementById('uploadProgress').value = percent;
-      }
-    };
-
-    xhr.onload = function() {
-      document.getElementById('progressContainer').style.display = "none";
-      if (xhr.status == 200) {
-        alert("✅ تم استعادة الإعدادات بنجاح، يتم إعادة التشغيل الآن!");
-        setTimeout(() => location.reload(), 5000);
-      } else {
-        alert("❌ حدث خطأ أثناء استعادة النسخة!");
-      }
-    };
-
-    xhr.onerror = function() {
-      document.getElementById('progressContainer').style.display = "none";
-      alert("❌ فشل رفع النسخة الاحتياطية");
-    };
-
-    xhr.send(content);
+    uploadedContent = event.target.result;
+    document.getElementById('warningBox').style.display = "flex";
   };
   reader.readAsText(file);
 }
+
+function confirmRestore(confirmed) {
+  document.getElementById('warningBox').style.display = "none";
+  if (!confirmed) {
+    document.getElementById('uploadFile').value = "";
+    uploadedContent = "";
+    return;
+  }
+
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/restore", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      const percent = (e.loaded / e.total) * 100;
+      document.getElementById('progressContainer').style.display = "block";
+      document.getElementById('uploadProgress').value = percent;
+    }
+  };
+
+  xhr.onload = function() {
+    document.getElementById('progressContainer').style.display = "none";
+    if (xhr.status == 200) {
+      alert("✅ تم استعادة الإعدادات بنجاح، سيتم إعادة التشغيل.");
+      setTimeout(() => location.reload(), 5000);
+    } else {
+      alert("❌ حدث خطأ أثناء الاستعادة!");
+    }
+  };
+
+  xhr.onerror = function() {
+    document.getElementById('progressContainer').style.display = "none";
+    alert("❌ فشل رفع النسخة الاحتياطية.");
+  };
+
+  xhr.send(uploadedContent);
+}
+
 
 
