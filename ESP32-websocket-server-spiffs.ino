@@ -405,6 +405,13 @@ void setup() {
 void loop() {
   server.handleClient();
   webSocket.loop();
+
+// إضافة تحقق من حالة الذاكرة
+  if (ESP.getFreeHeap() < 10000) { 
+    Serial.println("Low memory! Rebooting...");
+    ESP.restart();
+  }
+
   for (int i = 0; i < 4; i++) {
     if (offTimers[i] > 0 && millis() > offTimers[i]) {
       outputStates[i] = false;
