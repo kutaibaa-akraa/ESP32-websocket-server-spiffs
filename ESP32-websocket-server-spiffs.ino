@@ -321,31 +321,46 @@ void handleRestore() {
   }
 }
 
+// ------ دالة لبدء وضع AP ------
+void startAPMode() {
+  WiFi.softAP("ESP32_Config", "12345678"); // إعدادات AP ثابتة
+  Serial.println("AP Mode Started!");
+  Serial.println("SSID: ESP32_Config");
+  Serial.println("Password: 12345678");
+  Serial.println("AP IP: " + WiFi.softAPIP().toString());
+}
+
 void setup() {
   Serial.begin(115200);
   loadNetworkSettings();
 
-  IPAddress localIP;
-  localIP.fromString(static_ip);
-  IPAddress gateway(192,168,1,1);
-  IPAddress subnet(255,255,255,0);
-  WiFi.config(localIP, gateway, subnet);
-  WiFi.begin(ssid, password);
+  // إذا كان هناك إعدادات شبكة مخزنة، حاول الاتصال
+  if (strlen(ssid) > 0) {
+    IPAddress localIP;
+    if (strlen(static_ip) > 0) {
+      localIP.fromString(static_ip);
+      IPAddress gateway(192, 168, 1, 1); // افتراضي
+      IPAddress subnet(255, 255, 255, 0); // افتراضي
+      WiFi.config(localIP, gateway, subnet);
+    }
+    
+    WiFi.begin(ssid, password);
+    Serial.print("Connecting to WiFi...");
 
-  Serial.print("Connecting to WiFi");
   unsigned long startAttemptTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 15000) {
     delay(500);
     Serial.print(".");
   }
 
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("\nFailed to connect, starting Access Point...");
-    WiFi.softAP("ESP32_SETUP", "12345678");
-    Serial.println("AP IP address: " + WiFi.softAPIP().toString());
+ if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
+    } else {
+      Serial.println("\nConnection failed! Starting AP...");
+      startAPMode(); // انتقل إلى وضع AP
+    }
   } else {
-    Serial.println("\nConnected!");
-    Serial.println(WiFi.localIP());
+    startAPMode(); // ابدأ مباشرةً في وضع AP
   }
 
   if (!SPIFFS.begin(true)) {
