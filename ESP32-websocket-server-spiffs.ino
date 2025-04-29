@@ -57,6 +57,15 @@ void loadNetworkSettings() {
   EEPROM.get(0, ssid);
   EEPROM.get(32, password);
   EEPROM.get(64, static_ip);
+
+  // إذا كان SSID فارغًا، نعتبر الإعدادات غير موجودة
+  if (strlen(ssid) == 0) { 
+    Serial.println("No saved network settings.");
+    memset(ssid, 0, sizeof(ssid)); // تأكيد إفراغ البيانات
+    memset(password, 0, sizeof(password));
+    memset(static_ip, 0, sizeof(static_ip));
+  }
+
   for (int i = 0; i < 4; i++) {
     outputStates[i] = EEPROM.read(80 + i);
     EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
