@@ -375,7 +375,7 @@ void setup() {
 
   if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS mount failed");
-    return;
+    ESP.restart(); // إعادة التشغيل التلقائي عند فشل التحميل    
   }
 
   // التحقق من وجود الملفات الأساسية
