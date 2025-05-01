@@ -35,6 +35,7 @@
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h> // الإصدار السابع ----- 7.4.1 ----------
+#include <ESPmDNS.h>  //  إضافةالمكتبة
 
 #define NAME_LENGTH 32  // <-- أو أي حجم تريده مثل 64
 #define EEPROM_SIZE (84 + (4 * NAME_LENGTH))   // ديناميكي مع طول الاسم
@@ -58,20 +59,17 @@ void loadNetworkSettings() {  // للتأكد من تحميل أسماء الم�
   EEPROM.get(32, password);
   EEPROM.get(64, static_ip);
 
-  // إذا كان SSID فارغًا، تجاهل تحميل الأسماء (استخدم القيم الافتراضية)
-  if (strlen(ssid) == 0) {
-    memset(ssid, 0, sizeof(ssid));
-    memset(password, 0, sizeof(password));
-    memset(static_ip, 0, sizeof(static_ip));
-  } else {
-    // تحميل أسماء المخارج إذا وجدت إعدادات شبكة
-    for (int i = 0; i < 4; i++) {
-      outputStates[i] = EEPROM.read(80 + i);
-      EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
-      outputNames[i][NAME_LENGTH - 1] = '\0'; // تأمين نهاية السلسلة
+  // تحميل أسماء المخارج دائمًا ----- تحميل أسماء المخارج دائمًا حتى لو لم يكن هناك SSID ---
+  for (int i = 0; i < 4; i++) {
+    EEPROM.get(84 + (i * NAME_LENGTH), outputNames[i]);
+    outputNames[i][NAME_LENGTH - 1] = '\0'; // تأمين نهاية السلسلة
+
+    // إذا كان الاسم فارغًا، استخدم القيمة الافتراضية
+    if (strlen(outputNames[i]) == 0) {
+      strncpy(outputNames[i], ("Output " + String(i+1)).c_str(), NAME_LENGTH);
     }
   }
-  
+
   EEPROM.end();
 }
 
@@ -80,13 +78,12 @@ void saveNetworkSettings() {
   EEPROM.put(0, ssid);
   EEPROM.put(32, password);
   EEPROM.put(64, static_ip);
-  
+
   for (int i = 0; i < 4; i++) {
     outputNames[i][NAME_LENGTH - 1] = '\0'; // تأكيد نهاية السلسلة
-    EEPROM.write(80 + i, outputStates[i]); // حفظ حالة المخرج
-    EEPROM.put(84 + (i * NAME_LENGTH), outputNames[i]); // حفظ الاسم
+    EEPROM.put(84 + (i * NAME_LENGTH), outputNames[i]);
   }
-  
+
   EEPROM.commit();
   EEPROM.end();
 }
@@ -265,12 +262,22 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 void handleReset() {
   EEPROM.begin(EEPROM_SIZE);
+
+  // مسح جميع البيانات في EEPROM
   for (int i = 0; i < EEPROM_SIZE; i++) {
     EEPROM.write(i, 0);
   }
+
+  // تعيين أسماء المخارج الافتراضية في الذاكرة
+  const char* defaultNames[4] = {"Output 1", "Output 2", "Output 3", "Output 4"};
+  for (int i = 0; i < 4; i++) {
+    EEPROM.put(84 + (i * NAME_LENGTH), defaultNames[i]);
+  }
+
   EEPROM.commit();
   EEPROM.end();
-  server.send(200, "text/plain", "EEPROM cleared. Restarting...");
+
+  server.send(200, "text/plain", "✅ تمت إعادة الضبط إلى المصنع. سيتم إعادة التشغيل...");
   delay(1000);
   ESP.restart();
 }
@@ -356,6 +363,13 @@ void setup() {
     
     WiFi.begin(ssid, password);
     Serial.print("Connecting to WiFi...");
+    
+    // ------ إضافة هذا الجزء بعد بدء اتصال الواي فاي ------
+  if (!MDNS.begin("esp32-control")) { // اسم الجهاز
+    Serial.println("Error setting up mDNS!");
+  } else {
+    Serial.println("mDNS started! Access via: esp32-control.local");
+  }
 
   unsigned long startAttemptTime = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 8000) {

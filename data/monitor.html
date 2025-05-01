@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css" type="text/css" />
   <script src="script.js" type="text/javascript" ></script>
 </head>
-<body>
+<body onload="refreshLabels()">
 <h3 id="datetime"></h3>
   <button onclick="toggleDark()">🌓 Toggle Dark</button>
   <button onclick="refreshLabels()">🔄 Refresh</button>
@@ -19,6 +19,7 @@
     <div class="card"><div class="label" id="label2">Output 3</div><div id="state2" class="moff">OFF</div></div>
     <div class="card"><div class="label" id="label3">Output 4</div><div id="state3" class="moff">OFF</div></div>
   </div>
-  <button onclick="window.location.href='/'" class="btn-home">🏠 Back to Control</button>
+  <!-- button onclick="window.location.href='/'" class="btn-home">🏠 Back to Control</button -->
+  <button onclick="window.location.href='http://esp32-control.local/'">📊 Go to Control</button>
 </body>
 </html>

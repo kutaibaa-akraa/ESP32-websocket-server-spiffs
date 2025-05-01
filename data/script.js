@@ -1,10 +1,11 @@
 // فتح اتصال WebSocket مع ESP32
-const ws = new WebSocket(`ws://${location.hostname}:81`);
+// const ws = new WebSocket(`ws://${location.hostname}:81`);
+const ws = new WebSocket('ws://esp32-control.local:81'); // <-- استخدام اسم mDNS
 
 // عند فتح الاتصال
 ws.onopen = () => {
   console.log('✅ WebSocket connected');
-  refreshLabels();
+  refreshLabels(); // <-- تحديث الأسماء والحالات
 };
 
 // عند استقبال رسالة من السيرفر
@@ -72,12 +73,29 @@ function refreshLabels() {
   fetch('/labels.json')
     .then(res => res.json())
     .then(data => {
+      // تحديث الأسماء
       if (data.labels && Array.isArray(data.labels)) {
         data.labels.forEach((label, i) => {
           const labelElement = document.getElementById(`label${i}`);
           if (labelElement) labelElement.innerText = label;
         });
       }
+      // إرسال طلب للحصول على الحالات الحالية
+      fetch('/api/status')
+        .then(res => res.json())
+        .then(status => {
+          status.outputs.forEach((output, i) => {
+            const btn = document.getElementById(`btn${i}`);
+            const stateEl = document.getElementById(`state${i}`);
+            if (btn) {
+              btn.className = "btn " + (output.state === "on" ? "on" : "off");
+            }
+            if (stateEl) {
+              stateEl.innerText = output.state.toUpperCase();
+              stateEl.className = output.state === "on" ? "mon" : "moff";
+            }
+          });
+        });
     })
     .catch(() => console.warn('Could not fetch labels.'));
 }
@@ -101,14 +119,16 @@ function toggleSettings() {
 
 // إعادة ضبط المصنع
 function factoryReset() {
-  if (confirm("هل أنت متأكد أنك تريد إعادة ضبط المصنع؟")) {
+  if (confirm("هل أنت متأكد من إعادة الضبط إلى المصنع؟")) {
     fetch("/reset")
-      .then(res => res.text())
-      .then(msg => {
-        alert(msg);
-        setTimeout(() => location.reload(), 2000);
+      .then(() => {
+        alert("✅ تمت إعادة الضبط بنجاح. سيتم إعادة تحميل الصفحة.");
+        setTimeout(() => {
+          location.reload();
+          refreshLabels(); // تحديث الأسماء بعد التحميل
+        }, 2000);
       })
-      .catch(() => alert("حدث خطأ أثناء إعادة الضبط."));
+      .catch(() => alert("❌ فشل في إعادة الضبط!"));
   }
 }
 

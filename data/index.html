@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <title>ESP32 Control Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" -->
   <link rel="stylesheet" href="style.css" type="text/css" />
   <script src="script.js" type="text/javascript" ></script>
  </head>
-<body>
+<body onload="refreshLabels()">
   <button onclick="toggleDark()">🌓 Toggle Dark Mode</button>
   <button onclick="refreshLabels()">🔄 Refresh</button>
   <h2>ESP32 Output Control</h2>
@@ -39,7 +40,8 @@
       <input class="timer-input" type="number" id="timer3" placeholder="sec">
     </div>
   </div>
-  	<button onclick="window.location.href='monitor.html'" class="btn-monitor">📊 Go to Monitor</button>
+  	<!-- button onclick="window.location.href='monitor.html'" class="btn-monitor">📊 Go to Monitor</button -->
+	<button onclick="window.location.href='http://esp32-control.local/monitor.html'">📊 Go to Monitor</button>
 	<hr>
      <button id="settingsToggle" onclick="toggleSettings()">⚙️ Show/Hide Settings</button>
   <form method="POST" action="/save" id="settingsForm">
