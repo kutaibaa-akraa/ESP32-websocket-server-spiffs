@@ -35,7 +35,7 @@
 #include <EEPROM.h>        // مكتبة EEPROM لحفظ الحالة بين الإقلاعات
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h> // الإصدار السابع ----- 7.4.1 ----------
-#include <ESPmDNS.h>  //  إضافةالمكتبة
+#include <ESPmDNS.h>  // ----  المكتبة المطلوبة (ESPmDNS) تكون مضمنة بالفعل في
 
 #define NAME_LENGTH 32  // <-- أو أي حجم تريده مثل 64
 #define EEPROM_SIZE (84 + (4 * NAME_LENGTH))   // ديناميكي مع طول الاسم
@@ -363,12 +363,13 @@ void setup() {
     
     WiFi.begin(ssid, password);
     Serial.print("Connecting to WiFi...");
-    
+
     // ------ إضافة هذا الجزء بعد بدء اتصال الواي فاي ------
   if (!MDNS.begin("esp32-control")) { // اسم الجهاز
     Serial.println("Error setting up mDNS!");
   } else {
     Serial.println("mDNS started! Access via: esp32-control.local");
+    Serial.println("mDNS متاح! الوصول عبر: esp32-control.local");
   }
 
   unsigned long startAttemptTime = millis();
@@ -435,6 +436,13 @@ void loop() {
   if (ESP.getFreeHeap() < 10000) { 
     Serial.println("Low memory! Rebooting...");
     ESP.restart();
+  }
+
+    // إعادة الاتصال إذا انقطع الواي فاي
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi منقطع! جاري إعادة الاتصال...");
+    WiFi.reconnect();
+    delay(5000); // انتظر 5 ثواني قبل إعادة المحاولة
   }
 
   for (int i = 0; i < 4; i++) {

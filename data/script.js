@@ -2,6 +2,38 @@
 // const ws = new WebSocket(`ws://${location.hostname}:81`);
 const ws = new WebSocket('ws://esp32-control.local:81'); // <-- استخدام اسم mDNS
 
+// إعادة فتح WebSocket عند انقطاعه
+function reconnectWebSocket() {
+  setTimeout(() => {
+    if (ws.readyState === WebSocket.CLOSED) {
+      ws = new WebSocket('ws://esp32-control.local:81');
+      ws.onmessage = (event) => { /* ... */ };
+    }
+  }, 3000); // حاول إعادة الاتصال كل 3 ثواني
+}
+
+// تحديث البيانات كل 5 ثواني
+setInterval(() => {
+  fetch('/api/status')
+    .then(res => res.json())
+    .then(data => {
+      // تحديث كل مخرج بناءً على البيانات
+      data.outputs.forEach((output, index) => {
+        const stateEl = document.getElementById(`state${index}`);
+        if (stateEl) {
+          stateEl.innerText = output.state.toUpperCase();
+          stateEl.className = output.state === "on" ? "mon" : "moff";
+        }
+      });
+    })
+    .catch(() => console.log("فشل تحديث البيانات!"));
+}, 5000); // كل 5000 مللي ثانية (5 ثواني)
+
+ws.onclose = () => {
+  console.log("WebSocket مغلق! جاري إعادة الاتصال...");
+  reconnectWebSocket();
+};
+
 // عند فتح الاتصال
 ws.onopen = () => {
   console.log('✅ WebSocket connected');
@@ -9,6 +41,7 @@ ws.onopen = () => {
 };
 
 // عند استقبال رسالة من السيرفر
+// إعادة تعيين معالج الأحداث
 ws.onmessage = (event) => {
   const [index, state] = event.data.split(":");
   const button = document.getElementById(`btn${index}`);
